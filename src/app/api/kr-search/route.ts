@@ -1,20 +1,7 @@
 // src/app/api/kr-search/route.ts
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import csv from 'csv-parser';
-
-const STOCKS_PATH = path.resolve(process.cwd(), 'public/data/kr_stocks.csv');
-
-type StockItem = {
-  code: string;
-  standardCode: string;
-  name: string;
-};
-
-function cleanName(name: string): string {
-  return name.replace(/\s+ST.*$/, '').trim(); // "삼성전자     ST100..." → "삼성전자"
-}
+import { getKisAccessToken } from '@/utils/kis-token';
+import { searchStockByName } from '@/utils/kr-quote';
 
 export async function GET(req: Request): Promise<Response> {
   const { searchParams } = new URL(req.url);
@@ -22,24 +9,12 @@ export async function GET(req: Request): Promise<Response> {
 
   if (!query) return NextResponse.json({ results: [] });
 
-  const results: StockItem[] = [];
-
-  return new Promise<Response>((resolve) => {
-    fs.createReadStream(STOCKS_PATH)
-      .pipe(csv())
-      .on('data', (row) => {
-        const name = cleanName(row['한글명']);
-        if (name.includes(query)) {
-          results.push({
-            code: row['단축코드'],
-            standardCode: row['표준코드'],
-            name,
-          });
-        }
-      })
-      .on('end', () => {
-        const response = NextResponse.json({ results });
-        resolve(response);
-      });
-  });
+  try {
+    const accessToken = await getKisAccessToken();
+    const results = await searchStockByName(query, accessToken);
+    return NextResponse.json({ results });
+  } catch (error) {
+    console.error('KIS API error:', error);
+    return NextResponse.json({ error: '검색 중 오류 발생' }, { status: 500 });
+  }
 }

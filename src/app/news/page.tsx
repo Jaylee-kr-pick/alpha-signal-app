@@ -3,7 +3,7 @@
 import NewsAll from './NewsAll';
 import { useState } from 'react';
 import NewsAiTab from './NewsAiTab';
-// import NewsWatchlist from './NewsWatchlist';
+import NewsWatchlist from './NewsWatchlist';
 
 export default function NewsPage() {
   const [tab, setTab] = useState<'ai' | 'all' | 'watchlist'>('ai');
@@ -22,7 +22,7 @@ export default function NewsPage() {
       <div className="p-4">
         {tab === 'ai' && <NewsAiTab />}
         {tab === 'all' && <NewsAll />}
-        {/* {tab === 'watchlist' && <NewsWatchlist />} */}
+        {tab === 'watchlist' && <NewsWatchlist />}
       </div>
     </div>
   );

@@ -84,7 +84,9 @@ export default function NewsWatchlist() {
 
                 return (
                   <details key={idx} className="border rounded p-2 mb-4 w-full">
-                    <summary className="cursor-pointer font-semibold text-lg">{group[0].name || group[0].ticker || '기타'}</summary>
+                    <summary className="cursor-pointer font-semibold text-lg">
+                      {ticker !== '기타' ? ticker : '기타'}
+                    </summary>
                     <ul className="mt-2 space-y-2 pl-4">
                       {pageArticles.map((article, i) => (
                         <li key={i}>

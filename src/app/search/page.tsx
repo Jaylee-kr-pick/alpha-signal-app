@@ -36,10 +36,10 @@ export default function SearchPage() {
         </button>
       </div>
 
-      <div className="p-4">
-        {activeTab === 'ko' && <StockKoSearch />}
-        {activeTab === 'global' && <StockGlobalSearch />}
-        {activeTab === 'crypto' && <CryptoSearch />}
+      <div className="p-4 space-y-4">
+        {activeTab === 'ko' && <div className="space-y-2"><StockKoSearch /></div>}
+        {activeTab === 'global' && <div className="space-y-2"><StockGlobalSearch /></div>}
+        {activeTab === 'crypto' && <div className="space-y-2"><CryptoSearch /></div>}
       </div>
     </div>
   );

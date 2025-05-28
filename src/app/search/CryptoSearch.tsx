@@ -104,13 +104,13 @@ export default function CryptoSearch() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={coin.thumb} alt={coin.name} className="w-6 h-6" />
                 <div>
-                  <p className="font-semibold">{coin.name}</p>
+                  <p className="font-semibold max-w-[150px] truncate">{coin.name}</p>
                   <p className="text-xs text-gray-500">{coin.symbol}</p>
                 </div>
               </div>
               <button
                 onClick={() => handleToggle(coin)}
-                className={`text-xs px-3 py-1 rounded ${
+                className={`text-xs px-3 py-1 rounded min-w-[60px] text-center ${
                   exists
                     ? 'bg-red-500 text-white'
                     : 'bg-green-500 text-white'

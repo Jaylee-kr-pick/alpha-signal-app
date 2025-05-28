@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getAuth } from 'firebase/auth';
 import { db } from '@/firebase';
 import type { DocumentData } from 'firebase/firestore';
 import {
@@ -20,27 +21,61 @@ export default function WatchlistPage() {
 
   useEffect(() => {
     const fetchWatchlist = async () => {
-      const snapshot = await getDocs(collection(db, 'watchlist'));
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setWatchlist(items);
-      setLoading(false);
+      try {
+        const auth = getAuth();
+        const uid = auth.currentUser?.uid || 'kKffbyTAhOXdyKNNThJv'; // fallback for example data
+
+        const snapshot = await getDocs(collection(db, 'user', uid, 'watchlist'));
+        const items = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || '이름없음',
+            symbol: data.symbol || '기호없음',
+            type: data.type || '미지정',
+            alert: data.alert ?? false,
+          };
+        });
+        setWatchlist(items);
+      } catch (error) {
+        console.error('🔥 관심종목 로딩 실패:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchWatchlist();
   }, []);
 
   const toggleAlert = async (item: DocumentData) => {
-    await updateDoc(doc(db, 'watchlist', item.id), {
-      alert: !item.alert,
-    });
-    setWatchlist(prev =>
-      prev.map(w => (w.id === item.id ? { ...w, alert: !w.alert } : w))
-    );
+    try {
+      const auth = getAuth();
+      // Use fallback UID if auth.currentUser is not available
+      const uid = auth.currentUser?.uid || 'kKffbyTAhOXdyKNNThJv';
+      if (!uid) return;
+
+      await updateDoc(doc(db, 'user', uid, 'watchlist', item.id), {
+        alert: !item.alert,
+      });
+      setWatchlist(prev =>
+        prev.map(w => (w.id === item.id ? { ...w, alert: !w.alert } : w))
+      );
+    } catch (error) {
+      console.error('⚠️ 알림 토글 실패:', error);
+    }
   };
 
   const deleteItem = async (id: string) => {
-    await deleteDoc(doc(db, 'watchlist', id));
-    setWatchlist(prev => prev.filter(w => w.id !== id));
+    try {
+      const auth = getAuth();
+      const uid = auth.currentUser?.uid;
+      if (!uid) return;
+
+      await deleteDoc(doc(db, 'user', uid, 'watchlist', id));
+      setWatchlist(prev => prev.filter(w => w.id !== id));
+    } catch (error) {
+      console.error('🗑️ 삭제 실패:', error);
+    }
   };
 
   return (
@@ -70,6 +105,16 @@ export default function WatchlistPage() {
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-xs text-gray-500">{item.symbol}</p>
+                  <p className="text-xs text-gray-400">
+                    타입:{' '}
+                    {item.type === 'kr'
+                      ? '국내주식'
+                      : item.type === 'global'
+                      ? '해외주식'
+                      : item.type === 'coin'
+                      ? '암호화폐'
+                      : item.type}
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
