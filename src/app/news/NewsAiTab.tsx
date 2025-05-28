@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 
 type Article = {
-  title: string;
-  link: string;
-  published: string;
+  summary: string;
+  timestamp: { seconds: number };
 };
 
 export default function NewsAiTab() {
@@ -13,7 +12,7 @@ export default function NewsAiTab() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch('/api/ai-news');
+      const res = await fetch('/api/news/ai-news');
       const data = await res.json();
       setArticles(data.articles);
     };
@@ -22,14 +21,19 @@ export default function NewsAiTab() {
 
   return (
     <div className="p-4 space-y-4">
-      {articles.map((item, idx) => (
-        <div key={idx} className="border-b pb-3">
-          <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold">
-            {item.title}
-          </a>
-          <div className="text-xs text-gray-400">{item.published}</div>
-        </div>
-      ))}
+      {articles.length === 0 ? (
+        <p className="text-gray-400 text-sm">아직 도착한 뉴스가 없어요.</p>
+      ) : (
+        articles.map((item, idx) => (
+          <div key={idx} className="relative pl-6 border-l border-gray-300">
+            <div className="absolute -left-1.5 top-0 mt-1.5 w-3 h-3 bg-blue-500 rounded-full" />
+            <div className="text-xs text-gray-400">
+              {new Date(item.timestamp?.seconds * 1000).toLocaleString()}
+            </div>
+            <div className="text-sm text-gray-700">{item.summary.replace(/^내용:\s*/, '')}</div>
+          </div>
+        ))
+      )}
     </div>
   );
 }

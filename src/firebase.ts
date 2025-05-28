@@ -1,18 +1,20 @@
 // src/firebase.ts
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
+// 환경변수는 .env.local에서 불러옴
 const firebaseConfig = {
-  apiKey: "AIzaSyA0FTaRHAC1nykIg0RhP7kSE_GVOL5gGto",
-  authDomain: "pickordump.firebaseapp.com",
-  projectId: "pickordump",
-  storageBucket: "pickordump.firebasestorage.app",
-  messagingSenderId: "675136723268",
-  appId: "1:675136723268:web:cf48b056d09c22187d9f11",
-  measurementId: "G-LVHZ6LY4CR"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app); // ✅ 이 줄이 꼭 있어야 함
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+export { app, db, auth };

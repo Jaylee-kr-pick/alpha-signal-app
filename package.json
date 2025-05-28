@@ -16,6 +16,7 @@
     "firebase": "^11.8.1",
     "iconv-lite": "^0.6.3",
     "next": "15.3.2",
+    "openai": "^4.103.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rss-parser": "^3.13.0"

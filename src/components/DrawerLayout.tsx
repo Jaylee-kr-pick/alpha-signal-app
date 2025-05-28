@@ -23,7 +23,7 @@ export default function DrawerLayout({ children }: { children: React.ReactNode }
 
       {/* 퀵바 */}
       <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-white border-t border-gray-200 flex justify-around py-2 text-xs z-30">
-        <Link href="/dashboard" className="text-gray-500 text-center">
+        <Link href="/" className="text-gray-500 text-center">
           <div className="text-lg">⏱</div>
           <div>Dashboard</div>
         </Link>
@@ -50,7 +50,7 @@ export default function DrawerLayout({ children }: { children: React.ReactNode }
         <div className="fixed inset-0 z-40 flex">
           <div className="w-2/3 bg-white p-4 shadow-lg flex flex-col gap-4 text-sm">
             <h2 className="font-bold text-lg mb-2">📋 전체 메뉴</h2>
-            <Link href="/dashboard" onClick={() => setDrawerOpen(false)}>⏱ Dashboard</Link>
+            <Link href="/" onClick={() => setDrawerOpen(false)}>⏱ Dashboard</Link>
             <Link href="/news" onClick={() => setDrawerOpen(false)}>🗞 News</Link>
             <Link href="/signals" onClick={() => setDrawerOpen(false)}>💹 Signals</Link>
             <Link href="/watchlist" onClick={() => setDrawerOpen(false)}>📌 관심종목</Link>

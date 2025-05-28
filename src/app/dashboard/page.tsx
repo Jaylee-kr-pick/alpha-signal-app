@@ -25,7 +25,13 @@ export default function DashboardPage() {
         (a, b) => b.timestamp?.seconds - a.timestamp?.seconds
       );
 
-      setSignals(data);
+      setSignals(
+        data.map((doc: any) => ({
+          asset: doc.asset,
+          signal: doc.signal,
+          timestamp: doc.timestamp,
+        }))
+      );
       setTotal(data.length);
 
       const today = new Date();
