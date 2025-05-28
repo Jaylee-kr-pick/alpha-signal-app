@@ -1,32 +1,31 @@
-// src/app/api/kr-search/kis-token.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
-import { firebaseConfig } from '@/lib/firebaseConfig';
+import { db } from '@/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 let cachedToken: string | null = null;
 let cachedTime: number | null = null;
 
-// Initialize Firebase only once
-if (getApps().length === 0) {
-  initializeApp(firebaseConfig);
-}
-const db = getFirestore();
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function getKisAccessToken(): Promise<string> {
   const now = Date.now();
   const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+  if (cachedToken && cachedTime && now - cachedTime < TWENTY_FOUR_HOURS) {
+    return cachedToken;
+  }
+
   const docRef = doc(db, 'kis-token', 'current');
   const snapshot = await getDoc(docRef);
 
   if (snapshot.exists()) {
     const { access_token, timestamp } = snapshot.data();
     if (now - timestamp < TWENTY_FOUR_HOURS) {
-      return res.status(200).json({ access_token });
+      cachedToken = access_token;
+      cachedTime = timestamp;
+      return access_token;
     }
   }
 
-  const response = await fetch('https://openapi.koreainvestment.com:9443/oauth2/tokenP', {
+  console.log('🔑 Requesting KIS token with appkey:', process.env.KIS_APPKEY);
+  const response = await fetch('https://openapi.koreainvestment.com:9443/oauth2/token', {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
@@ -39,15 +38,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   const data = await response.json();
+  console.log('📩 KIS token response:', data);
 
   if (!response.ok) {
-    return res.status(500).json({ error: 'Failed to obtain token', details: data });
+    throw new Error(`Failed to obtain token: ${JSON.stringify(data)}`);
   }
+
+  cachedToken = data.access_token;
+  cachedTime = now;
 
   await setDoc(docRef, {
     access_token: data.access_token,
     timestamp: now,
   });
 
-  res.status(200).json({ access_token: data.access_token });
+  return data.access_token;
 }

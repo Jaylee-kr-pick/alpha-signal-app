@@ -8,13 +8,13 @@ export async function getToken() {
   const now = Date.now();
 
   if (snap.exists()) {
-    const { token, timestamp } = snap.data();
+    const { access_token: token, timestamp } = snap.data();
     if (now - timestamp < 1000 * 60 * 60 * 24) {
       return token;
     }
   }
 
-  const res = await fetch('https://openapi.koreainvestment.com:9443/oauth2/tokenP', {
+  const res = await fetch('https://openapi.koreainvestment.com:9443/oauth2/token', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -26,9 +26,13 @@ export async function getToken() {
 
   const data = await res.json();
   const token = data.access_token;
+  if (!token) {
+    console.error('❌ 토큰 발급 실패 응답:', JSON.stringify(data, null, 2));
+    throw new Error('토큰 발급 실패: access_token이 없습니다');
+  }
 
   await setDoc(ref, {
-    token,
+    access_token: token,
     timestamp: now
   });
 
@@ -63,8 +67,17 @@ export async function getRealtimeQuote(stockCode: string) {
 export async function searchStockByName(query: string) {
   const token = await getToken();
 
+  console.log('🪙 사용 토큰:', token);
+
   const url = new URL('https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/search-stock-info');
-  url.searchParams.append('query', query);
+  url.searchParams.append('query', query); // 그대로 두되 이중 인코딩은 제거
+  console.log('📨 요청 주소:', url.toString());
+  console.log('📨 요청 헤더:', {
+    'authorization': `Bearer ${token}`,
+    'appkey': process.env.KIS_APPKEY!,
+    'tr_id': 'CTPF1604R',
+    'custtype': 'P'
+  });
 
   const res = await fetch(url.toString(), {
     method: 'GET',
@@ -72,12 +85,21 @@ export async function searchStockByName(query: string) {
       'content-type': 'application/json',
       'authorization': `Bearer ${token}`,
       'appkey': process.env.KIS_APPKEY!,
-      'appsecret': process.env.KIS_APPSECRET!,
       'tr_id': 'CTPF1604R',
       'custtype': 'P'
     }
   });
 
   const data = await res.json();
-  return data;
+  if (data.rt_cd !== '0') {
+    console.error('❌ 검색 실패:', data.msg1 || '에러 없음');
+    return { results: [] };
+  }
+  console.log('🔍 KIS 응답:', JSON.stringify(data, null, 2));
+  const results = data.output?.map((item: any) => ({
+    name: item.hname,
+    standardCode: item.shcode
+  })) || [];
+
+  return { results };
 }

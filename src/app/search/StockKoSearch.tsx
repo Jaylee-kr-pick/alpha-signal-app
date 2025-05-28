@@ -1,43 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 type StockItem = {
-  code: string;
   name: string;
   standardCode: string;
-};
-
-type WatchlistItem = {
-  id: string;
-  symbol: string;
-  name: string;
-  standardCode: string;
-  alert: boolean;
 };
 
 export default function StockKoSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<StockItem[]>([]);
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchWatchlist = async () => {
-      try {
-        const res = await fetch('/api/watchlist?type=kr');
-        const data = await res.json();
-        setWatchlist(data.watchlist || []);
-      } catch (err) {
-        console.error('❌ 관심종목 가져오기 오류:', err);
-      }
-    };
-    fetchWatchlist();
-  }, []);
-
-  const isInWatchlist = (standardCode: string) => {
-    return watchlist.find(w => w.symbol === standardCode);
-  };
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -45,29 +18,12 @@ export default function StockKoSearch() {
     try {
       const res = await fetch(`/api/kr-search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      setResults(data.results || []);
+      if (!res.ok) throw new Error(data.message || '검색 실패');
+      setResults(data.output || []);
     } catch (error) {
       console.error('❌ 검색 오류:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleToggle = async (item: StockItem) => {
-    const exists = isInWatchlist(item.standardCode);
-    if (exists) {
-      await deleteDoc(doc(db, 'watchlist', exists.id));
-      setWatchlist(prev => prev.filter(w => w.id !== exists.id));
-    } else {
-      const docRef = await addDoc(collection(db, 'watchlist'), {
-        symbol: item.standardCode,
-        name: item.name,
-        standardCode: item.standardCode,
-        alert: true,
-        type: 'kr',
-        timestamp: new Date(),
-      });
-      setWatchlist(prev => [...prev, { id: docRef.id, ...item, alert: true, type: 'kr' }]);
     }
   };
 
@@ -93,31 +49,14 @@ export default function StockKoSearch() {
       )}
 
       <ul className="mt-4 space-y-2">
-        {results.map((item, idx) => {
-          const exists = isInWatchlist(item.standardCode);
-          return (
-            <li
-              key={idx}
-              className="bg-white p-3 rounded shadow flex justify-between items-center text-sm flex-wrap"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{item.name}</p>
-                <p className="text-xs text-gray-500 truncate">
-                  {item.standardCode} / 표준코드: {item.standardCode}
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggle(item)}
-                className={`text-xs px-3 py-1 rounded whitespace-nowrap ${
-                  exists ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-                }`}
-              >
-                {exists ? '삭제' : '추가'}
-              </button>
-            </li>
-          );
-        })}
+        {results.map((item, idx) => (
+          <li key={idx} className="border rounded px-4 py-2">
+            <div className="font-semibold">{item.name}</div>
+            <div className="text-sm text-gray-500">{item.code}</div>
+          </li>
+        ))}
       </ul>
+      <pre className="text-xs text-gray-400 mt-4">{JSON.stringify(results, null, 2)}</pre>
     </div>
   );
 }
