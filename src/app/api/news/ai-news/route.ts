@@ -43,10 +43,12 @@ export async function GET() {
     const newsCollection = collection(db, 'ai-news');
 
     const existingSnapshot = await getDocs(newsCollection);
-    const existingData: Record<string, { timestamp: Timestamp }> = {};
+    const existingData: Record<string, any> = {};
     existingSnapshot.forEach((doc) => {
-      const data = doc.data();
-      existingData[data.link] = data;
+      const data = doc.data() as any;
+      if (data?.link) {
+        existingData[data.link] = data;
+      }
     });
 
     const newArticles = feed.items?.filter((item) => {
