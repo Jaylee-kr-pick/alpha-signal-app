@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, Timestamp, getDoc, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 const FETCH_INTERVAL = 30 * 60 * 1000; // 30분
 
@@ -43,9 +43,9 @@ export async function GET() {
     const newsCollection = collection(db, 'ai-news');
 
     const existingSnapshot = await getDocs(newsCollection);
-    const existingData: Record<string, any> = {};
-    existingSnapshot.forEach((doc) => {
-      const data = doc.data() as any;
+    const existingData: Record<string, { timestamp: Timestamp; [key: string]: unknown }> = {};
+    existingSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+      const data = doc.data();
       if (data?.link) {
         existingData[data.link] = data;
       }
