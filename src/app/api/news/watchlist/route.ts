@@ -42,7 +42,11 @@ export async function GET() {
         const parsed = await parseStringPromise(xml);
 
         const items = parsed?.rss?.channel?.[0]?.item || [];
-        const articles = items.map((item: Record<string, unknown>) => ({
+        const articles = items.map((item: {
+          title?: string[];
+          link?: string[];
+          pubDate?: string[];
+        }) => ({
           title: item.title?.[0] || '',
           link: item.link?.[0] || '',
           pubDate: item.pubDate?.[0] || '',
