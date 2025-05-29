@@ -17,7 +17,6 @@ if (!getApps().length) {
 } else {
   app = getApp();
 }
-const db = getFirestore(app);
 
 type Article = {
   title: string;

@@ -40,11 +40,10 @@ export async function GET() {
     const feed = await parser.parseURL(FEED_URL);
     console.log('🟡 RSS feed loaded:', feed.items?.length);
     const nowTimestamp = Timestamp.now();
-    const oneDayAgo = Timestamp.fromMillis(nowTimestamp.toMillis() - 24 * 60 * 60 * 1000);
     const newsCollection = collection(db, 'ai-news');
 
     const existingSnapshot = await getDocs(newsCollection);
-    const existingData: Record<string, any> = {};
+    const existingData: Record<string, { timestamp: Timestamp }> = {};
     existingSnapshot.forEach((doc) => {
       const data = doc.data();
       existingData[data.link] = data;
@@ -84,7 +83,7 @@ export async function GET() {
         }),
       });
 
-      const data = await response.json();
+      const data: { choices?: { message?: { content?: string } }[] } = await response.json();
       const summary = data.choices?.[0]?.message?.content ?? '요약 실패';
 
       const articleData = {
