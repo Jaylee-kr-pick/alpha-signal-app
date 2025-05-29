@@ -27,9 +27,9 @@ export default function DashboardPage() {
 
       setSignals(
         data.map((doc: Record<string, unknown>) => ({
-          asset: doc.asset,
-          signal: doc.signal,
-          timestamp: doc.timestamp,
+          asset: doc.asset as string,
+          signal: doc.signal as string,
+          timestamp: doc.timestamp as { toDate: () => Date },
         }))
       );
       setTotal(data.length);
