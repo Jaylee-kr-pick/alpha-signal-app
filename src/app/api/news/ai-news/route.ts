@@ -43,10 +43,10 @@ export async function GET() {
     const newsCollection = collection(db, 'ai-news');
 
     const existingSnapshot = await getDocs(newsCollection);
-    const existingData: Record<string, { timestamp: Timestamp; [key: string]: unknown }> = {};
+    const existingData: Record<string, { timestamp: Timestamp; link?: string }> = {};
     existingSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-      const data = doc.data() as { [key: string]: unknown; timestamp: Timestamp };
-      if (data?.link) {
+      const data = doc.data() as { link?: string; timestamp: Timestamp };
+      if (data.link) {
         existingData[data.link] = data;
       }
     });
