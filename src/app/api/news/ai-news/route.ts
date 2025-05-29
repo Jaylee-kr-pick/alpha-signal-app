@@ -53,7 +53,8 @@ export async function GET() {
 
     const newArticles = feed.items?.filter((item) => {
       const pubDate = new Date(item.pubDate || '');
-      return !existingData[item.link] && pubDate > new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const link = item.link;
+      return link && !existingData[link] && pubDate > new Date(Date.now() - 24 * 60 * 60 * 1000);
     }) ?? [];
     console.log('🟢 Filtered new articles:', newArticles.length);
 
