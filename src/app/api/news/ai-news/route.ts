@@ -120,7 +120,11 @@ export async function GET() {
 
     return NextResponse.json({ articles: summarizedArticles.slice(0, 50) });
   } catch (error) {
-    console.error('❌ 뉴스 요약 API 실패:', error.message, error.stack);
+    if (error instanceof Error) {
+      console.error('❌ 뉴스 요약 API 실패:', error.message, error.stack);
+    } else {
+      console.error('❌ 뉴스 요약 API 실패:', error);
+    }
     return NextResponse.json({ articles: [] });
   }
 }
