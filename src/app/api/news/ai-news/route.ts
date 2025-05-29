@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, Timestamp, getDoc, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import crypto from 'crypto';
 
 const FETCH_INTERVAL = 30 * 60 * 1000; // 30분
 
@@ -98,7 +99,8 @@ export async function GET() {
       };
 
       console.log('📝 Saving summarized article:', article.title);
-      await setDoc(doc(newsCollection, encodeURIComponent(article.link)), articleData);
+      const docId = article.link ? encodeURIComponent(article.link) : crypto.randomUUID();
+      await setDoc(doc(newsCollection, docId), articleData);
       summarizedArticles.push(articleData);
     }
 
