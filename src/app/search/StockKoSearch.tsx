@@ -52,7 +52,7 @@ export default function StockKoSearch() {
         {results.map((item, idx) => (
           <li key={idx} className="border rounded px-4 py-2">
             <div className="font-semibold">{item.name}</div>
-            <div className="text-sm text-gray-500">{item.code}</div>
+            <div className="text-sm text-gray-500">{item.standardCode}</div>
           </li>
         ))}
       </ul>
