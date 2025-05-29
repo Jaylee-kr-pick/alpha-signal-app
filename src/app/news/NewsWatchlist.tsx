@@ -1,14 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-
-const firebaseConfig = {
-  // 필요한 Firebase 설정을 여기에 삽입하세요
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-};
 
 
 type Article = {
