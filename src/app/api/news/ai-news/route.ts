@@ -47,7 +47,7 @@ export async function GET() {
     existingSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const data = doc.data();
       if (data?.link) {
-        existingData[data.link] = data;
+        existingData[data.link] = data as { [key: string]: unknown; timestamp: Timestamp };
       }
     });
 
