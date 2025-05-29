@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 
-const API_KEY = 'd0o13n9r01qn5ghmirr0d0o13n9r01qn5ghmirrg'; // 핀허브 API 키
+const API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY!; // 핀허브 API 키
 
 type GlobalStock = {
   symbol: string;
