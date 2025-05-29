@@ -45,9 +45,9 @@ export async function GET() {
     const existingSnapshot = await getDocs(newsCollection);
     const existingData: Record<string, { timestamp: Timestamp; [key: string]: unknown }> = {};
     existingSnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-      const data = doc.data();
+      const data = doc.data() as { [key: string]: unknown; timestamp: Timestamp };
       if (data?.link) {
-        existingData[data.link] = data as { [key: string]: unknown; timestamp: Timestamp };
+        existingData[data.link] = data;
       }
     });
 
