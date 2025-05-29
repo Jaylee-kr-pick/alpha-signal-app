@@ -27,17 +27,20 @@ export async function GET(): Promise<Response> {
     const decoded = iconv.decode(response.data, 'euc-kr');
     const json = await csv().fromString(decoded);
 
-    const batch = db.batch();
-    json.forEach((item: { [key: string]: string }) => {
-      const code = item['종목코드']?.trim();
-      const name = item['회사명']?.trim();
-      if (code && name) {
-        const ref = db.collection('kr_stocks').doc(code);
-        batch.set(ref, { name, code });
-      }
-    });
-
-    await batch.commit();
+    const chunkSize = 500;
+    for (let i = 0; i < json.length; i += chunkSize) {
+      const chunk = json.slice(i, i + chunkSize);
+      const batch = db.batch();
+      chunk.forEach((item: { [key: string]: string }) => {
+        const code = item['종목코드']?.trim();
+        const name = item['회사명']?.trim();
+        if (code && name) {
+          const ref = db.collection('kr_stocks').doc(code);
+          batch.set(ref, { name, code });
+        }
+      });
+      await batch.commit();
+    }
     return NextResponse.json({ message: 'KRX 업데이트 완료', count: json.length });
   } catch (error) {
     console.error('🔥 KRX 업데이트 실패:', error);
