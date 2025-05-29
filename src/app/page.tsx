@@ -26,7 +26,14 @@ export default function Home() {
   useEffect(() => {
     const fetchDashboard = async () => {
       const snapshot = await getDocs(collection(db, "signals"));
-      const docs = snapshot.docs.map(doc => doc.data()).sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+      const docs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          timestamp: data.timestamp,
+          asset: data.asset,
+          signal: data.signal,
+        } as Signal;
+      }).sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
 
       setSignals(docs);
       setTotal(docs.length);
