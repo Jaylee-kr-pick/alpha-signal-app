@@ -17,7 +17,7 @@ export async function GET() {
     const userId = 'kKffbyTAhOXdyKNNThJv'; // Example static user ID
     const snapshot = await getDocs(collection(db, `user/${userId}/watchlist`));
 
-    const allArticles: any[] = [];
+    const allArticles: Record<string, unknown>[] = [];
 
     for (const doc of snapshot.docs) {
       const { name } = doc.data();
@@ -42,7 +42,7 @@ export async function GET() {
         const parsed = await parseStringPromise(xml);
 
         const items = parsed?.rss?.channel?.[0]?.item || [];
-        const articles = items.map((item: any) => ({
+        const articles = items.map((item: Record<string, any>) => ({
           title: item.title?.[0] || '',
           link: item.link?.[0] || '',
           pubDate: item.pubDate?.[0] || '',

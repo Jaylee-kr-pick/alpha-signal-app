@@ -13,14 +13,25 @@ export async function GET(req: Request): Promise<Response> {
     const accessToken = await getKisAccessToken();
     const { results } = await searchStockByName(query, accessToken);
     return NextResponse.json({ results });
-  } catch (error: any) {
-    console.error('❌ KIS 검색 실패:', error);
-    return NextResponse.json(
-      {
-        message: error?.message || 'KIS 검색 실패',
-        details: error,
-      },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('❌ KIS 검색 실패:', error.message);
+      return NextResponse.json(
+        {
+          message: error.message,
+          details: error.stack,
+        },
+        { status: 500 }
+      );
+    } else {
+      console.error('❌ KIS 검색 실패: 알 수 없는 에러', error);
+      return NextResponse.json(
+        {
+          message: 'KIS 검색 실패',
+          details: String(error),
+        },
+        { status: 500 }
+      );
+    }
   }
 }

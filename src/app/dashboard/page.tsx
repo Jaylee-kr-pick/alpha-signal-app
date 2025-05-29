@@ -26,7 +26,7 @@ export default function DashboardPage() {
       );
 
       setSignals(
-        data.map((doc: any) => ({
+        data.map((doc: Record<string, any>) => ({
           asset: doc.asset,
           signal: doc.signal,
           timestamp: doc.timestamp,

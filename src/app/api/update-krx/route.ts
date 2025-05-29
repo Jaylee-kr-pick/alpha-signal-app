@@ -20,7 +20,7 @@ if (!getApps().length) {
 
 const db = admin.firestore();
 
-export async function GET(req: Request): Promise<Response> {
+export async function GET(): Promise<Response> {
   try {
     const url = 'https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13';
     const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -28,7 +28,7 @@ export async function GET(req: Request): Promise<Response> {
     const json = await csv().fromString(decoded);
 
     const batch = db.batch();
-    json.forEach((item: any) => {
+    json.forEach((item: { [key: string]: string }) => {
       const code = item['종목코드']?.trim();
       const name = item['회사명']?.trim();
       if (code && name) {

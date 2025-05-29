@@ -96,7 +96,7 @@ export async function searchStockByName(query: string) {
     return { results: [] };
   }
   console.log('🔍 KIS 응답:', JSON.stringify(data, null, 2));
-  const results = data.output?.map((item: any) => ({
+  const results = data.output?.map((item: { hname: string; shcode: string }) => ({
     name: item.hname,
     standardCode: item.shcode
   })) || [];

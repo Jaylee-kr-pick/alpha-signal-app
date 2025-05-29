@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 
 const firebaseConfig = {
@@ -43,8 +43,12 @@ export default function NewsWatchlist() {
         }
         console.log('📰 관심종목 뉴스 fetch 성공:', json);
         setArticles(json.articles);
-      } catch (error: any) {
-        console.error('❌ 관심종목 뉴스 fetch 실패:', error.message, error.stack);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error('❌ 관심종목 뉴스 fetch 실패:', error.message, error.stack);
+        } else {
+          console.error('❌ 관심종목 뉴스 fetch 실패:', error);
+        }
         setArticles([]);
       } finally {
         setLoading(false);
