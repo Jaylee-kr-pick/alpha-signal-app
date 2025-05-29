@@ -1,4 +1,3 @@
-// @ts-expect-error: No type declaration for xml2js
 import { NextResponse } from 'next/server';
 import { parseStringPromise } from 'xml2js';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
