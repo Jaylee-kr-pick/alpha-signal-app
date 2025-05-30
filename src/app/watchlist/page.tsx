@@ -42,11 +42,14 @@ export default function WatchlistPage() {
         setWatchlist((prevWatchlist) => {
           // Filter out old entries of the same type
           const filtered = prevWatchlist.filter((item) => item.type !== type);
-          const newItems = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type,
-          }));
+          const newItems = snapshot.docs.map((doc) => {
+            const data = doc.data() as Omit<WatchlistItem, 'id' | 'type'>;
+            return {
+              id: doc.id,
+              ...data,
+              type,
+            };
+          });
           return [...filtered, ...newItems];
         });
       });
@@ -95,12 +98,11 @@ export default function WatchlistPage() {
     }
   };
 
-  const getSubCollection = (type: string) => {
+  const getSubCollection = (type: WatchlistItem['type']) => {
     switch (type) {
       case 'kr': return 'ko_stocks';
       case 'global': return 'global_stocks';
       case 'coin': return 'crypto_stocks';
-      default: return '';
     }
   };
 
@@ -123,9 +125,9 @@ export default function WatchlistPage() {
           <p className="text-sm text-gray-400">관심종목이 없습니다. + 추가 버튼을 눌러 등록하세요.</p>
         ) : (
           <ul className="space-y-2">
-            {watchlist.map((item, idx) => (
+            {watchlist.map((item) => (
               <li
-                key={idx}
+                key={item.id}
                 className="bg-white p-3 rounded shadow flex justify-between items-center"
               >
                 <div>
