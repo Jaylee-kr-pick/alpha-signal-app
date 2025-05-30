@@ -46,12 +46,22 @@ async function fetchAndUploadKRX() {
     throw new Error('기업 리스트를 파싱할 수 없습니다.');
   }
 
-  const records = corpList.map((corp: any) => ({
-    code: corp.corp_code?.[0],
-    name: corp.corp_name?.[0],
-    stock_code: corp.stock_code?.[0],
-    modify_date: corp.modify_date?.[0],
-  })).filter(record => record.code && record.name && record.stock_code);
+  interface CorpRecord {
+    corp_code: string;
+    corp_name: string;
+    stock_code: string;
+    modify_date: string;
+  }
+
+  const records = corpList.map((corp: unknown) => {
+    const c = corp as CorpRecord;
+    return {
+      code: c.corp_code,
+      name: c.corp_name,
+      stock_code: c.stock_code,
+      modify_date: c.modify_date,
+    };
+  }).filter(record => record.code && record.name && record.stock_code);
 
   const chunkSize = 1000;
   for (let i = 0; i < records.length; i += chunkSize) {
