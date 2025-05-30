@@ -51,6 +51,13 @@ async function fetchAndUploadKRX() {
     throw new Error('기업 리스트를 파싱할 수 없습니다.');
   }
 
+  interface ParsedCorpRecord {
+    code: string;
+    name: string;
+    stock_code: string;
+    modify_date: string;
+  }
+
   interface CorpRecord {
     corp_code: string;
     corp_name: string;
@@ -58,7 +65,7 @@ async function fetchAndUploadKRX() {
     modify_date: string;
   }
 
-  const records = corpList.map((corp: unknown) => {
+  const records: ParsedCorpRecord[] = corpList.map((corp: unknown) => {
     const c = corp as CorpRecord;
     return {
       code: c.corp_code,
