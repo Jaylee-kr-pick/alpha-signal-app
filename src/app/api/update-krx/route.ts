@@ -1,3 +1,8 @@
+interface ZipEntry {
+  entryName: string;
+  getData: () => Buffer;
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +36,7 @@ async function fetchAndUploadKRX() {
 
   const buffer = Buffer.from(await response.arrayBuffer());
   const zip = new AdmZip(buffer);
-  const zipEntries = zip.getEntries();
+  const zipEntries = zip.getEntries() as ZipEntry[];
   const xmlEntry = zipEntries.find(entry => entry.entryName.endsWith('.xml'));
 
   if (!xmlEntry) {
