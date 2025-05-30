@@ -73,7 +73,7 @@ async function fetchAndUploadKRX() {
       stock_code: c.stock_code,
       modify_date: c.modify_date,
     };
-  }).filter(record => record.code && record.name && record.stock_code);
+  }).filter((record: ParsedCorpRecord) => record.code && record.name && record.stock_code);
 
   const chunkSize = 1000;
   for (let i = 0; i < records.length; i += chunkSize) {
