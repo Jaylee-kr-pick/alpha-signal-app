@@ -34,7 +34,7 @@ export default function NewsWatchlist() {
         }
         console.log('📰 관심종목 뉴스 fetch 성공:', json);
         setArticles(
-          json.articles.sort((a, b) => {
+          (json.articles as Article[]).sort((a: Article, b: Article) => {
             const dateA = new Date(a.pubDate || '').getTime();
             const dateB = new Date(b.pubDate || '').getTime();
             return dateB - dateA;
