@@ -14,8 +14,6 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 db.settings({
-  servicePath: 'asia-northeast3-firestore.googleapis.com',
-  ssl: true,
   ignoreUndefinedProperties: true,
 });
 const FieldValue = admin.firestore.FieldValue;
