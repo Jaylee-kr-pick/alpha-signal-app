@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, ChangeEvent, MouseEvent } from 'react';
-import { db } from '@/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { app } from '@/firebase'; // Firebase 초기화한 파일
 
 interface CoinResult {
   id: string;
@@ -12,30 +13,48 @@ interface CoinResult {
   large?: string;
 }
 
-interface WatchItem {
-  id: string;
+interface WatchlistItem {
   symbol: string;
   name: string;
+  type: string;
   alert: boolean;
 }
+
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 export default function CryptoSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CoinResult[]>([]);
-  const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchWatchlist = async () => {
-      const snapshot = await getDocs(collection(db, 'watchlist'));
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as WatchItem[];
-      setWatchlist(items);
-    };
-    fetchWatchlist();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+        loadWatchlist(user.uid);
+      } else {
+        setUserId(null);
+        setWatchlist([]);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
+  const loadWatchlist = async (uid: string) => {
+    const collectionRef = collection(db, 'user', uid, 'watchlist_crypto_stocks');
+    const querySnapshot = await getDocs(collectionRef);
+    const items: WatchlistItem[] = [];
+    querySnapshot.forEach((doc) => {
+      items.push(doc.data() as WatchlistItem);
+    });
+    setWatchlist(items);
+  };
+
   const isInWatchlist = (symbol: string) => {
-    return watchlist.find((w) => w.symbol === symbol);
+    return watchlist.some((item) => item.symbol === symbol);
   };
 
   const handleSearch = async () => {
@@ -54,20 +73,43 @@ export default function CryptoSearch() {
     }
   };
 
-  const handleToggle = async (coin: CoinResult) => {
-    const exists = isInWatchlist(coin.id);
-    if (exists) {
-      await deleteDoc(doc(db, 'watchlist', exists.id));
-      setWatchlist(prev => prev.filter(w => w.id !== exists.id));
-    } else {
-      const docRef = await addDoc(collection(db, 'watchlist'), {
-        symbol: coin.id,
-        name: coin.name,
-        image: coin.large,
-        alert: true,
-        timestamp: new Date(),
-      });
-      setWatchlist(prev => [...prev, { id: docRef.id, symbol: coin.id, name: coin.name, alert: true }]);
+  const toggleWatch = async (coin: CoinResult) => {
+    if (!userId) {
+      alert('로그인 후 사용 가능합니다.');
+      return;
+    }
+
+    // Firestore 저장 경로: /user/{uid}/watchlist_crypto_stocks/{코인심볼}
+    const docRef = doc(db, 'user', userId, 'watchlist_crypto_stocks', coin.symbol.toUpperCase());
+
+    try {
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        // 삭제
+        await deleteDoc(docRef);
+        setWatchlist((prev) => prev.filter((item) => item.symbol !== coin.symbol.toUpperCase()));
+      } else {
+        // 추가
+        await setDoc(docRef, {
+          symbol: coin.symbol.toUpperCase(),
+          name: coin.name,
+          type: 'crypto',
+          alert: true,
+          createdAt: serverTimestamp(),
+        });
+        setWatchlist((prev) => [
+          ...prev,
+          {
+            symbol: coin.symbol.toUpperCase(),
+            name: coin.name,
+            type: 'crypto',
+            alert: true,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error('❌ Firestore 저장 오류:', error);
     }
   };
 
@@ -97,7 +139,7 @@ export default function CryptoSearch() {
 
       <ul className="mt-4 space-y-2">
         {results.map((coin, idx) => {
-          const exists = isInWatchlist(coin.id);
+          const exists = isInWatchlist(coin.symbol.toUpperCase());
           return (
             <li key={idx} className="bg-white p-3 rounded shadow flex justify-between items-center text-sm">
               <div className="flex items-center gap-3">
@@ -105,11 +147,11 @@ export default function CryptoSearch() {
                 <img src={coin.thumb} alt={coin.name} className="w-6 h-6" />
                 <div>
                   <p className="font-semibold max-w-[150px] truncate">{coin.name}</p>
-                  <p className="text-xs text-gray-500">{coin.symbol}</p>
+                  <p className="text-xs text-gray-500">{coin.symbol.toUpperCase()}</p>
                 </div>
               </div>
               <button
-                onClick={() => handleToggle(coin)}
+                onClick={() => toggleWatch(coin)}
                 className={`text-xs px-3 py-1 rounded min-w-[60px] text-center ${
                   exists
                     ? 'bg-red-500 text-white'

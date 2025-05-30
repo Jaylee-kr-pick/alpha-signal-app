@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import DrawerWrapper from '@/components/DrawerWrapper';
+import { AuthProvider } from '@/context/auth-context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${inter.className} bg-gray-50 min-h-screen flex justify-center`}>
-        <DrawerWrapper>{children}</DrawerWrapper>
+        <AuthProvider>
+          <DrawerWrapper>{children}</DrawerWrapper>
+        </AuthProvider>
       </body>
     </html>
   );

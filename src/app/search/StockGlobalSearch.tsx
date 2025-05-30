@@ -1,7 +1,18 @@
-// src/app/search/StockGlobalSearch.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  serverTimestamp
+} from 'firebase/firestore';
+import { app } from '@/firebase';
 
 const API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY!; // 핀허브 API 키
 
@@ -22,19 +33,27 @@ export default function StockGlobalSearch() {
 
   const [loading, setLoading] = useState(false);
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // 초기 관심종목 불러오기
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Firestore에서 관심종목 불러오기 (수정)
   useEffect(() => {
-    const saved = localStorage.getItem('globalWatchlist');
-    if (saved) {
-      setWatchlist(JSON.parse(saved));
-    }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserId(user.uid);
+        const watchlistRef = collection(db, 'user', user.uid, 'watchlist_global_stocks');
+        const snapshot = await getDocs(watchlistRef);
+        const symbols = snapshot.docs.map((doc) => doc.id);
+        setWatchlist(symbols);
+      } else {
+        setUserId(null);
+        setWatchlist([]);
+      }
+    });
+    return () => unsubscribe();
   }, []);
-
-  // 관심종목 저장
-  useEffect(() => {
-    localStorage.setItem('globalWatchlist', JSON.stringify(watchlist));
-  }, [watchlist]);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -53,10 +72,36 @@ export default function StockGlobalSearch() {
     }
   };
 
-  const toggleWatch = (symbol: string) => {
-    setWatchlist((prev) =>
-      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
-    );
+  const toggleWatch = async (item: GlobalStock) => {
+    if (!userId) {
+      alert('로그인 후 사용 가능합니다.');
+      return;
+    }
+
+    const watchlistCollectionRef = collection(db, 'user', userId, 'watchlist_global_stocks');
+    const docRef = doc(watchlistCollectionRef, item.symbol);
+
+    try {
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        // 삭제
+        await deleteDoc(docRef);
+        setWatchlist((prev) => prev.filter((sym) => sym !== item.symbol));
+      } else {
+        // 추가
+        await setDoc(docRef, {
+          symbol: item.symbol,
+          name: item.description,
+          type: 'global',
+          alert: true,
+          createdAt: serverTimestamp()
+        });
+        setWatchlist((prev) => [...prev, item.symbol]);
+      }
+    } catch (error) {
+      console.error('❌ Firestore 저장 오류:', error);
+    }
   };
 
   return (
@@ -97,7 +142,7 @@ export default function StockGlobalSearch() {
                     <p className="text-xs text-gray-500 truncate">{item.symbol} / {item.type}</p>
                   </div>
                   <button
-                    onClick={() => toggleWatch(item.symbol)}
+                    onClick={() => toggleWatch(item)}
                     className={`text-xs px-3 py-1 rounded ${
                       isSaved ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
                     }`}

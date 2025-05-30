@@ -1,49 +1,81 @@
-
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import axios from 'axios';
-import csv from 'csvtojson';
-import admin from 'firebase-admin';
-import { getApps } from 'firebase-admin/app';
-import iconv from 'iconv-lite';
+import { createClient } from '@supabase/supabase-js';
+import AdmZip from 'adm-zip';
+import { parseStringPromise } from 'xml2js';
 
-if (!getApps().length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+// Supabase 클라이언트 생성
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase URL 또는 Anon Key가 설정되지 않았습니다. .env.local 파일을 확인하세요.');
 }
 
-const db = admin.firestore();
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function GET(): Promise<Response> {
-  try {
-    const url = 'https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13';
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const decoded = iconv.decode(response.data, 'euc-kr');
-    const json = await csv().fromString(decoded);
+const apiKey = process.env.DART_API_KEY;
+if (!apiKey) {
+  throw new Error('DART API 키가 없습니다. .env.local 파일을 확인하세요.');
+}
 
-    const chunkSize = 500;
-    for (let i = 0; i < json.length; i += chunkSize) {
-      const chunk = json.slice(i, i + chunkSize);
-      const batch = db.batch();
-      chunk.forEach((item: { [key: string]: string }) => {
-        const code = item['종목코드']?.trim();
-        const name = item['회사명']?.trim();
-        if (code && name) {
-          const ref = db.collection('kr_stocks').doc(code);
-          batch.set(ref, { name, code });
-        }
-      });
-      await batch.commit();
+async function fetchAndUploadKRX() {
+  const url = `https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key=${apiKey}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`파일 다운로드 실패: ${response.statusText}`);
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const zip = new AdmZip(buffer);
+  const zipEntries = zip.getEntries();
+  const xmlEntry = zipEntries.find(entry => entry.entryName.endsWith('.xml'));
+
+  if (!xmlEntry) {
+    throw new Error('XML 파일을 찾을 수 없습니다.');
+  }
+
+  const content = xmlEntry.getData().toString('utf-8');
+  const parsedXml = await parseStringPromise(content);
+  const corpList = parsedXml.result.list;
+
+  if (!corpList) {
+    throw new Error('기업 리스트를 파싱할 수 없습니다.');
+  }
+
+  const records = corpList.map((corp: any) => ({
+    code: corp.corp_code?.[0],
+    name: corp.corp_name?.[0],
+    stock_code: corp.stock_code?.[0],
+    modify_date: corp.modify_date?.[0],
+  })).filter(record => record.code && record.name && record.stock_code);
+
+  const chunkSize = 1000;
+  for (let i = 0; i < records.length; i += chunkSize) {
+    const chunk = records.slice(i, i + chunkSize);
+    const { error } = await supabase.from('kr_stocks').upsert(chunk, {
+      onConflict: ['code'], // code 기준으로 중복 방지
+    });
+    if (error) {
+      throw new Error(`Supabase 저장 실패: ${error.message}`);
     }
-    return NextResponse.json({ message: 'KRX 업데이트 완료', count: json.length });
+  }
+
+  return records.length;
+}
+
+export async function GET() {
+  try {
+    const count = await fetchAndUploadKRX();
+    return NextResponse.json({
+      message: 'KRX 종목 업데이트 완료',
+      total: count,
+    });
   } catch (error) {
-    console.error('🔥 KRX 업데이트 실패:', error);
-    return NextResponse.json({ error: '업데이트 실패', details: error }, { status: 500 });
+    console.error('🔥 KRX 업데이트 실패:', (error as Error).message);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

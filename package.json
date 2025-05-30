@@ -9,8 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "adm-zip": "^0.5.16",
     "axios": "^1.9.0",
     "cheerio": "^1.0.0",
+    "csv-parse": "^5.6.0",
     "csv-parser": "^3.2.0",
     "csvtojson": "^2.0.10",
     "fast-xml-parser": "^5.2.3",
@@ -18,10 +21,14 @@
     "firebase-admin": "^13.4.0",
     "iconv-lite": "^0.6.3",
     "next": "15.3.2",
+    "node-fetch": "^3.3.2",
     "openai": "^4.103.0",
+    "papaparse": "^5.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "unzipper": "^0.12.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

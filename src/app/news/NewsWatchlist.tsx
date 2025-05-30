@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
+import { useAuth } from '@/context/auth-context';
 
 type Article = {
   title: string;
@@ -12,21 +12,34 @@ type Article = {
 };
 
 export default function NewsWatchlist() {
+  const { user } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageMap, setPageMap] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     const fetchWatchlistNews = async () => {
+      if (!user) {
+        console.error('❌ 유저 없음: 로그인 필요');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const res = await fetch('/api/news/watchlist', { next: { revalidate: 60 } });
+        const res = await fetch(`/api/news/watchlist?uid=${user.uid}`, { next: { revalidate: 60 } });
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();
         if (!json || !Array.isArray(json.articles)) {
           throw new Error('Invalid JSON response');
         }
         console.log('📰 관심종목 뉴스 fetch 성공:', json);
-        setArticles(json.articles);
+        setArticles(
+          json.articles.sort((a, b) => {
+            const dateA = new Date(a.pubDate || '').getTime();
+            const dateB = new Date(b.pubDate || '').getTime();
+            return dateB - dateA;
+          })
+        );
       } catch (error: unknown) {
         if (error instanceof Error) {
           console.error('❌ 관심종목 뉴스 fetch 실패:', error.message, error.stack);
@@ -40,7 +53,7 @@ export default function NewsWatchlist() {
     };
 
     fetchWatchlistNews();
-  }, []);
+  }, [user]);
 
   return (
     <div className="p-4 w-full">
@@ -56,15 +69,13 @@ export default function NewsWatchlist() {
                 articles.reduce((groups, article) => {
                   const key = (article.name?.trim() && article.name !== '기타')
                     ? article.name
-                    : (article.ticker?.trim() && article.ticker !== '기타')
-                    ? article.ticker
                     : '기타';
                   if (!groups[key]) groups[key] = [];
                   groups[key].push(article);
                   return groups;
                 }, {} as { [key: string]: Article[] })
-              ).map(([ticker, group], idx) => {
-                const currentPage = pageMap[ticker] || 1;
+              ).map(([name, group], idx) => {
+                const currentPage = pageMap[name] || 1;
                 const itemsPerPage = 5;
                 const startIdx = (currentPage - 1) * itemsPerPage;
                 const pageArticles = group.slice(startIdx, startIdx + itemsPerPage);
@@ -73,7 +84,7 @@ export default function NewsWatchlist() {
                 return (
                   <details key={idx} className="border rounded p-2 mb-4 w-full">
                     <summary className="cursor-pointer font-semibold text-lg">
-                      {ticker !== '기타' ? ticker : '기타'}
+                      {name}
                     </summary>
                     <ul className="mt-2 space-y-2 pl-4">
                       {pageArticles.map((article, i) => (
@@ -100,7 +111,7 @@ export default function NewsWatchlist() {
                           onClick={() =>
                             setPageMap((prev) => ({
                               ...prev,
-                              [ticker]: Math.max(1, currentPage - 1),
+                              [name]: Math.max(1, currentPage - 1),
                             }))
                           }
                           className="px-2 py-1 border rounded"
@@ -116,7 +127,7 @@ export default function NewsWatchlist() {
                             <button
                               key={pageNum}
                               onClick={() =>
-                                setPageMap((prev) => ({ ...prev, [ticker]: pageNum }))
+                                setPageMap((prev) => ({ ...prev, [name]: pageNum }))
                               }
                               className={`px-2 py-1 border rounded ${
                                 currentPage === pageNum ? 'bg-gray-200' : ''
@@ -129,7 +140,7 @@ export default function NewsWatchlist() {
                           onClick={() =>
                             setPageMap((prev) => ({
                               ...prev,
-                              [ticker]: Math.min(totalPages, currentPage + 1),
+                              [name]: Math.min(totalPages, currentPage + 1),
                             }))
                           }
                           className="px-2 py-1 border rounded"

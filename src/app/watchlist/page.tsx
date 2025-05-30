@@ -1,80 +1,97 @@
-// src/app/watchlist/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import { db } from '@/firebase';
-import type { DocumentData } from 'firebase/firestore';
 import {
   collection,
-  getDocs,
+  onSnapshot,
   doc,
   updateDoc,
   deleteDoc,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState<DocumentData[]>([]);
+  const [watchlist, setWatchlist] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchWatchlist = async () => {
-      try {
-        const auth = getAuth();
-        const uid = auth.currentUser?.uid || 'kKffbyTAhOXdyKNNThJv'; // fallback for example data
+    const auth = getAuth();
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
 
-        const snapshot = await getDocs(collection(db, 'user', uid, 'watchlist'));
-        const items = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
+    const unsubscribes: (() => void)[] = [];
+
+    const listenToSubCollection = (subCollection: string, type: string) => {
+      const colRef = collection(db, 'user', uid, 'watchlist_' + subCollection);
+      const q = query(colRef, orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setWatchlist((prevWatchlist) => {
+          // Filter out old entries of the same type
+          const filtered = prevWatchlist.filter((item) => item.type !== type);
+          const newItems = snapshot.docs.map(doc => ({
             id: doc.id,
-            name: data.name || '이름없음',
-            symbol: data.symbol || '기호없음',
-            type: data.type || '미지정',
-            alert: data.alert ?? false,
-          };
+            ...doc.data(),
+            type,
+          }));
+          return [...filtered, ...newItems];
         });
-        setWatchlist(items);
-      } catch (error) {
-        console.error('🔥 관심종목 로딩 실패:', error);
-      } finally {
-        setLoading(false);
-      }
+      });
+      unsubscribes.push(unsubscribe);
     };
 
-    fetchWatchlist();
+    listenToSubCollection('ko_stocks', 'kr');
+    listenToSubCollection('global_stocks', 'global');
+    listenToSubCollection('crypto_stocks', 'coin');
+
+    setLoading(false);
+
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
   }, []);
 
-  const toggleAlert = async (item: DocumentData) => {
+  const toggleAlert = async (item: any) => {
     try {
       const auth = getAuth();
-      // Use fallback UID if auth.currentUser is not available
-      const uid = auth.currentUser?.uid || 'kKffbyTAhOXdyKNNThJv';
+      const uid = auth.currentUser?.uid;
       if (!uid) return;
 
-      await updateDoc(doc(db, 'user', uid, 'watchlist', item.id), {
-        alert: !item.alert,
-      });
-      setWatchlist(prev =>
-        prev.map(w => (w.id === item.id ? { ...w, alert: !w.alert } : w))
+      await updateDoc(
+        doc(db, 'user', uid, 'watchlist_' + getSubCollection(item.type), item.id),
+        {
+          alert: !item.alert,
+        }
       );
     } catch (error) {
       console.error('⚠️ 알림 토글 실패:', error);
     }
   };
 
-  const deleteItem = async (id: string) => {
+  const deleteItem = async (item: any) => {
     try {
       const auth = getAuth();
       const uid = auth.currentUser?.uid;
       if (!uid) return;
 
-      await deleteDoc(doc(db, 'user', uid, 'watchlist', id));
-      setWatchlist(prev => prev.filter(w => w.id !== id));
+      await deleteDoc(
+        doc(db, 'user', uid, 'watchlist_' + getSubCollection(item.type), item.id)
+      );
     } catch (error) {
       console.error('🗑️ 삭제 실패:', error);
+    }
+  };
+
+  const getSubCollection = (type: string) => {
+    switch (type) {
+      case 'kr': return 'ko_stocks';
+      case 'global': return 'global_stocks';
+      case 'coin': return 'crypto_stocks';
+      default: return '';
     }
   };
 
@@ -97,23 +114,16 @@ export default function WatchlistPage() {
           <p className="text-sm text-gray-400">관심종목이 없습니다. + 추가 버튼을 눌러 등록하세요.</p>
         ) : (
           <ul className="space-y-2">
-            {watchlist.map((item: DocumentData, idx: number) => (
+            {watchlist.map((item, idx) => (
               <li
                 key={idx}
                 className="bg-white p-3 rounded shadow flex justify-between items-center"
               >
                 <div>
                   <p className="font-semibold">{item.name}</p>
-                  <p className="text-xs text-gray-500">{item.symbol}</p>
+                  <p className="text-xs text-gray-500">{item.symbol || item.code}</p>
                   <p className="text-xs text-gray-400">
-                    타입:{' '}
-                    {item.type === 'kr'
-                      ? '국내주식'
-                      : item.type === 'global'
-                      ? '해외주식'
-                      : item.type === 'coin'
-                      ? '암호화폐'
-                      : item.type}
+                    타입: {item.type === 'kr' ? '국내주식' : item.type === 'global' ? '해외주식' : '암호화폐'}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -126,7 +136,7 @@ export default function WatchlistPage() {
                     알림 {item.alert ? 'ON' : 'OFF'}
                   </button>
                   <button
-                    onClick={() => deleteItem(item.id)}
+                    onClick={() => deleteItem(item)}
                     className="text-red-500 text-sm"
                   >
                     🗑
