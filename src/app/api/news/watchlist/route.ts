@@ -32,7 +32,7 @@ export async function GET(req: Request) {
       name: string;
     };
 
-    let allWatchlistItems: WatchlistItem[] = [];
+    const allWatchlistItems: WatchlistItem[] = [];
 
     for (const colRef of collections) {
       const snapshot = await getDocs(colRef);

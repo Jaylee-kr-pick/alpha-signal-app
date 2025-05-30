@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, MouseEvent } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/firebase'; // Firebase 초기화한 파일
 
 interface CoinResult {

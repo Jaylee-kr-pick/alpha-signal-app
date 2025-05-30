@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, updateProfile, User } from 'firebase/auth';
 import { app } from '@/firebase'; // 기존 경로 반영
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -57,9 +58,11 @@ export default function ProfilePage() {
       <h2 className="text-2xl font-bold mb-6 text-center">👤 프로필</h2>
       <div className="text-center">
         {user.photoURL && (
-          <img
+          <Image
             src={user.photoURL}
             alt="프로필 사진"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full mx-auto mb-4"
           />
         )}

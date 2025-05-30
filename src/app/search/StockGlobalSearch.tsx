@@ -53,7 +53,7 @@ export default function StockGlobalSearch() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [auth, db]);
 
   const handleSearch = async () => {
     if (!query.trim()) return;

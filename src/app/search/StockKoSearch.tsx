@@ -8,9 +8,6 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
   deleteDoc,
   serverTimestamp
 } from 'firebase/firestore';

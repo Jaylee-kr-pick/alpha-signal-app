@@ -75,7 +75,12 @@ export async function GET() {
       total: count,
     });
   } catch (error) {
-    console.error('🔥 KRX 업데이트 실패:', (error as Error).message);
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    if (error instanceof Error) {
+      console.error('🔥 KRX 업데이트 실패:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      console.error('🔥 KRX 업데이트 실패: 알 수 없는 에러', error);
+      return NextResponse.json({ error: 'Unknown error' }, { status: 500 });
+    }
   }
 }

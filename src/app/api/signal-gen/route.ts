@@ -112,8 +112,13 @@ export async function GET() {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('❌ 시그널 생성 실패:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('❌ 시그널 생성 실패:', error.message);
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    } else {
+      console.error('❌ 시그널 생성 실패: 알 수 없는 에러', error);
+      return NextResponse.json({ success: false, error: 'Unknown error' }, { status: 500 });
+    }
   }
 }

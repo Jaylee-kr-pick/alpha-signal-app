@@ -14,8 +14,17 @@ import {
 } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
+interface WatchlistItem {
+  id: string;
+  name: string;
+  symbol?: string;
+  code?: string;
+  type: 'kr' | 'global' | 'coin';
+  alert: boolean;
+}
+
 export default function WatchlistPage() {
-  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -55,7 +64,7 @@ export default function WatchlistPage() {
     };
   }, []);
 
-  const toggleAlert = async (item: any) => {
+  const toggleAlert = async (item: WatchlistItem) => {
     try {
       const auth = getAuth();
       const uid = auth.currentUser?.uid;
@@ -72,7 +81,7 @@ export default function WatchlistPage() {
     }
   };
 
-  const deleteItem = async (item: any) => {
+  const deleteItem = async (item: WatchlistItem) => {
     try {
       const auth = getAuth();
       const uid = auth.currentUser?.uid;

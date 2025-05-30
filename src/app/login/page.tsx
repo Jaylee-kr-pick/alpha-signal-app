@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { app } from '@/firebase';
+import Image from 'next/image';
 
 const auth = getAuth(app);
 
@@ -40,9 +41,11 @@ export default function LoginPage() {
           disabled={loading}
           className="flex items-center justify-center w-full py-3 px-6 border rounded shadow hover:bg-gray-100 transition text-gray-700"
         >
-          <img
+          <Image
             src="https://developers.google.com/identity/images/g-logo.png"
             alt="Google Logo"
+            width={24}
+            height={24}
             className="w-6 h-6 mr-4"
           />
           <span>구글로 로그인</span>
