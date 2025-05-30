@@ -79,7 +79,7 @@ async function fetchAndUploadKRX() {
   for (let i = 0; i < records.length; i += chunkSize) {
     const chunk = records.slice(i, i + chunkSize);
     const { error } = await supabase.from('kr_stocks').upsert(chunk, {
-      onConflict: ['code'], // code 기준으로 중복 방지
+      onConflict: 'code', // code 기준으로 중복 방지
     });
     if (error) {
       throw new Error(`Supabase 저장 실패: ${error.message}`);
