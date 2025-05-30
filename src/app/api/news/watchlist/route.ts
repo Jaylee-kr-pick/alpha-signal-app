@@ -12,6 +12,12 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
+interface RSSNewsItem {
+  title?: string[];
+  link?: string[];
+  pubDate?: string[];
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -69,7 +75,7 @@ export async function GET(req: Request) {
         const xml = await res.text();
         const parsed = await parseStringPromise(xml);
 
-        const items = parsed?.rss?.channel?.[0]?.item || [];
+        const items = (parsed?.rss?.channel?.[0]?.item || []) as RSSNewsItem[];
         const articles = items.map((newsItem) => ({
           title: newsItem.title?.[0] || '',
           link: newsItem.link?.[0] || '',
