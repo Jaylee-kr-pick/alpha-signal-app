@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db, FieldValue } from '@/firebase-admin'; // use firebase-admin here
-import { OpenAI } from 'openai';
+// import { OpenAI } from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
 
 async function analyzeStock(stock: { symbol: string; name: string; type: string }) {
   const prompt = `
@@ -21,21 +21,35 @@ async function analyzeStock(stock: { symbol: string; name: string; type: string 
     점수만 숫자로 대답해주세요.
   `;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo-1106',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+    }),
   });
 
-  const response = completion.choices[0]?.message.content || '';
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.statusText}`);
+  }
+
+  const completion = await response.json();
   console.log('🟢 OpenAI 응답 전체:', JSON.stringify(completion, null, 2));
-  console.log('🟢 파싱된 content:', response);
-  const scoreMatch = response.match(/\d+/);
+
+  const responseText = completion.choices?.[0]?.message?.content || '';
+  console.log('🟢 파싱된 content:', responseText);
+
+  const scoreMatch = responseText.match(/\d+/);
   const score = scoreMatch ? parseInt(scoreMatch[0], 10) : null;
 
   return {
     score,
-    fullAnalysis: response,
+    fullAnalysis: responseText,
   };
 }
 
