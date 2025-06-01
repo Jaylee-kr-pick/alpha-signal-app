@@ -35,7 +35,7 @@ export default function WatchlistPage() {
 
     const unsubscribes: (() => void)[] = [];
 
-    const listenToSubCollection = (subCollection: string, type: string) => {
+    const listenToSubCollection = (subCollection: string, type: WatchlistItem['type']) => {
       const colRef = collection(db, 'user', uid, 'watchlist_' + subCollection);
       const q = query(colRef, orderBy('createdAt', 'desc'));
       const unsubscribe = onSnapshot(q, (snapshot) => {
