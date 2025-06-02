@@ -1,4 +1,8 @@
 import axios from 'axios';
+import https from 'https';
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
 import { NextResponse } from 'next/server';
 import { db, FieldValue } from '@/firebase-admin'; // use firebase-admin here
 // import { OpenAI } from 'openai';
@@ -34,6 +38,7 @@ async function analyzeStock(stock: { symbol: string; name: string; type: string 
         'Content-Type': 'application/json',
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
+      httpsAgent,
     }
   );
 
