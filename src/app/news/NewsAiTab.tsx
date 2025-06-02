@@ -22,7 +22,7 @@ export default function NewsAiTab() {
   return (
     <div className="p-4 space-y-4">
       {articles.length === 0 ? (
-        <p className="text-gray-400 text-sm">아직 도착한 뉴스가 없어요.</p>
+        <p className="text-gray-400 text-sm">AI가 최신 뉴스를 요약중...</p>
       ) : (
         articles.map((item, idx) => (
           <div key={idx} className="relative pl-6 border-l border-gray-300">
