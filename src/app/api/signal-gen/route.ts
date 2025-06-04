@@ -33,7 +33,8 @@ async function analyzeStock(stock: { symbol: string; name: string; type: string 
     - 문서는 보기 편하게 잘 정리해서 작성해 줘.
     - 분석 내용은 종목의 산업 동향, 경쟁사 분석, 재무 상태 등을 포함해야 해.
     - 문서 아웃풋은 잘 읽히도록 마크다운 형식으로 작성해 줘.
-    
+    - AI가 작성한 것처럼 보이지 않도록 전문가가 상담해 주듯이 작성해줘 ***같은 것 쓰지 않도록
+
 
   `;
 
