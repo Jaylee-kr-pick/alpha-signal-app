@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, signOut, updateProfile, User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, updateProfile, deleteUser, User } from 'firebase/auth';
 import { app } from '@/firebase'; // 기존 경로 반영
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { getFirestore, doc, deleteDoc } from 'firebase/firestore';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
@@ -29,6 +30,27 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await signOut(auth);
     router.push('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    try {
+      const db = getFirestore(app);
+      const userDocRef = doc(db, 'user', user.uid);
+      await deleteDoc(userDocRef); // Firestore 문서 삭제
+      console.log('✅ Firestore user 문서 삭제 완료');
+
+      await deleteUser(user); // Firebase Auth 계정 삭제
+      alert('회원 탈퇴가 완료되었습니다.');
+      router.push('/login');
+    } catch (error: any) {
+      console.error('회원 탈퇴 실패:', error);
+      if (error.code === 'auth/requires-recent-login') {
+        alert('오래된 로그인입니다. 다시 로그인 후 다시 시도해주세요.');
+      } else {
+        alert('회원 탈퇴에 실패했습니다.');
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -89,6 +111,12 @@ export default function ProfilePage() {
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm mt-4"
         >
           로그아웃
+        </button>
+        <button
+          onClick={handleDeleteAccount}
+          className="text-red-400 text-xs mt-2 underline"
+        >
+          회원 탈퇴
         </button>
       </div>
     </div>

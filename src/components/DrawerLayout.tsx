@@ -47,24 +47,39 @@ export default function DrawerLayout({ children }: { children: React.ReactNode }
 
       {/* 드로어 */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-40 flex">
-          <div className="w-2/3 bg-white p-4 shadow-lg flex flex-col gap-4 text-sm">
+        <div className="fixed inset-0 z-40 flex transition-all duration-300">
+          <div className="w-2/3 bg-white p-4 shadow-lg flex flex-col gap-4 text-sm animate-slide-in">
             <h2 className="font-bold text-lg mb-2">📋 전체 메뉴</h2>
+            <p className="text-xs text-gray-500 mb-4">Alpha Signal은 주식 및 코인 시장의 AI 기반 분석 시그널을 제공합니다.</p>
             <Link href="/" onClick={() => setDrawerOpen(false)}>⏱ Dashboard</Link>
             <Link href="/news" onClick={() => setDrawerOpen(false)}>🗞 News</Link>
             <Link href="/signals" onClick={() => setDrawerOpen(false)}>💹 Signals</Link>
             <Link href="/watchlist" onClick={() => setDrawerOpen(false)}>📌 관심종목</Link>
             <Link href="/profile" onClick={() => setDrawerOpen(false)}>👤 프로필</Link>
 
-            <div className="mt-auto pt-6 border-t text-xs text-gray-500">
+            <div className="mt-auto pt-6 border-t text-xs text-gray-500 space-y-2">
               {auth.currentUser ? (
                 <>
                   <p>👤 로그인됨</p>
                   <p>{auth.currentUser.email}</p>
+                  <p>🪙 구독 상태: 기본</p>
+                  <button
+                    onClick={() => auth.signOut()}
+                    className="text-red-500 text-xs underline mt-2"
+                  >
+                    로그아웃
+                  </button>
                 </>
               ) : (
                 <p>로그인되지 않음</p>
               )}
+              <Link
+                href="https://www.youtube.com/@%ED%94%BD%EC%98%AC%EB%8D%A4%ED%94%84"
+                target="_blank"
+                className="block text-blue-500 text-xs underline mt-4"
+              >
+                🎥 유튜브 바로 가기
+              </Link>
             </div>
           </div>
 

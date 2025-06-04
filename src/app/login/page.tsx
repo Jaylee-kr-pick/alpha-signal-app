@@ -57,7 +57,7 @@ export default function LoginPage() {
           className="flex items-center justify-center w-full py-3 px-6 border rounded shadow hover:bg-gray-100 transition text-gray-700"
         >
           <Image
-            src="https://developers.google.com/identity/images/g-logo.png"
+            src="/google-logo.svg"
             alt="Google Logo"
             width={24}
             height={24}
