@@ -43,10 +43,15 @@ export default function ProfilePage() {
       await deleteUser(user); // Firebase Auth 계정 삭제
       alert('회원 탈퇴가 완료되었습니다.');
       router.push('/login');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('회원 탈퇴 실패:', error);
-      if (error.code === 'auth/requires-recent-login') {
-        alert('오래된 로그인입니다. 다시 로그인 후 다시 시도해주세요.');
+      if (error instanceof Error && 'code' in error) {
+        const firebaseError = error as { code: string };
+        if (firebaseError.code === 'auth/requires-recent-login') {
+          alert('오래된 로그인입니다. 다시 로그인 후 다시 시도해주세요.');
+        } else {
+          alert('회원 탈퇴에 실패했습니다.');
+        }
       } else {
         alert('회원 탈퇴에 실패했습니다.');
       }
