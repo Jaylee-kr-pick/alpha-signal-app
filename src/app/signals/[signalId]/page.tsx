@@ -33,7 +33,9 @@ export default function SignalDetailPage() {
       const docRef = doc(db, 'user', userId!, 'signals', signalId as string);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setSignal(docSnap.data() as SignalDetail);
+        const data = docSnap.data() as SignalDetail;
+        const cleanedAnalysis = data.analysis.replace(/\*/g, '');
+        setSignal({ ...data, analysis: cleanedAnalysis });
       }
       setLoading(false);
     };
@@ -51,7 +53,7 @@ export default function SignalDetailPage() {
   const formattedDate = format(new Date(signal.createdAt.seconds * 1000), 'yyyy년 MM월 dd일 HH:mm');
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-6">
       <div className="bg-white shadow-lg rounded-lg p-8 space-y-6">
         <div className="flex justify-between items-center border-b pb-4">
           <div>
@@ -65,7 +67,7 @@ export default function SignalDetailPage() {
         </div>
         <div>
           <h2 className="text-xl font-semibold mb-2">📊 상세 분석 내용</h2>
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{signal.analysis}</p>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm">{signal.analysis}</p>
         </div>
       </div>
     </div>

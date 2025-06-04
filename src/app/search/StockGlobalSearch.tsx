@@ -34,11 +34,12 @@ export default function StockGlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<'free' | 'pro'>('free');
 
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Firestore에서 관심종목 불러오기 (수정)
+  // Firestore에서 관심종목 및 플랜 불러오기
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -47,6 +48,14 @@ export default function StockGlobalSearch() {
         const snapshot = await getDocs(watchlistRef);
         const symbols = snapshot.docs.map((doc) => doc.id);
         setWatchlist(symbols);
+
+        // 플랜 정보 불러오기
+        const userDocRef = doc(db, 'user', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setPlan(userData.plan || 'free');
+        }
       } else {
         setUserId(null);
         setWatchlist([]);
@@ -90,11 +99,17 @@ export default function StockGlobalSearch() {
         setWatchlist((prev) => prev.filter((sym) => sym !== item.symbol));
       } else {
         // 추가
+        // 무료 플랜 사용자는 alert가 켜진 종목이 1개 이상이면 새로 추가하는 종목은 alert를 false로 저장
+        const watchlistRef = collection(db, 'user', userId, 'watchlist_global_stocks');
+        const currentSnapshot = await getDocs(watchlistRef);
+        const currentOnCount = currentSnapshot.docs.filter(doc => doc.data().alert === true).length;
+        const shouldAlert = plan === 'free' && currentOnCount >= 1 ? false : true;
+
         await setDoc(docRef, {
           symbol: item.symbol,
           name: item.description,
           type: 'global',
-          alert: true,
+          alert: shouldAlert,
           createdAt: serverTimestamp()
         });
         setWatchlist((prev) => [...prev, item.symbol]);

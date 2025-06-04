@@ -29,12 +29,20 @@ export default function CryptoSearch() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<'free' | 'pro'>('free');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
         loadWatchlist(user.uid);
+        // 플랜 정보 가져오기
+        const userDocRef = doc(db, 'user', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setPlan(userData.plan || 'free');
+        }
       } else {
         setUserId(null);
         setWatchlist([]);
@@ -91,11 +99,20 @@ export default function CryptoSearch() {
         setWatchlist((prev) => prev.filter((item) => item.symbol !== coin.symbol.toUpperCase()));
       } else {
         // 추가
+        // 무료 플랜은 alert true가 1개만 가능하도록 제한
+        let shouldAlert = true;
+        if (plan === 'free') {
+          // 현재 alert가 true인 관심종목 개수 확인
+          const watchlistRef = collection(db, 'user', userId, 'watchlist_crypto_stocks');
+          const currentSnapshot = await getDocs(watchlistRef);
+          const currentOnCount = currentSnapshot.docs.filter(doc => doc.data().alert === true).length;
+          shouldAlert = currentOnCount >= 1 ? false : true;
+        }
         await setDoc(docRef, {
           symbol: coin.symbol.toUpperCase(),
           name: coin.name,
           type: 'crypto',
-          alert: true,
+          alert: shouldAlert,
           createdAt: serverTimestamp(),
         });
         setWatchlist((prev) => [
@@ -104,7 +121,7 @@ export default function CryptoSearch() {
             symbol: coin.symbol.toUpperCase(),
             name: coin.name,
             type: 'crypto',
-            alert: true,
+            alert: shouldAlert,
           },
         ]);
       }

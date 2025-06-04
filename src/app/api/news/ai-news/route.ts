@@ -88,7 +88,7 @@ export async function GET() {
       });
 
       const data: { choices?: { message?: { content?: string } }[] } = await response.json();
-      const summary = data.choices?.[0]?.message?.content ?? '요약 실패';
+      const summary = data.choices?.[0]?.message?.content?.replace(/^요약:\s*/, '') ?? '요약 실패';
 
       const articleData = {
         title: article.title,

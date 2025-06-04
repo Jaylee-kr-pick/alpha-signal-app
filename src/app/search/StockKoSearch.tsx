@@ -30,12 +30,20 @@ export default function StockKoSearch() {
   const [loading, setLoading] = useState(false);
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<'free' | 'pro'>('free');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
         loadWatchlist(user.uid);
+        // Load plan
+        const userDocRef = doc(db, 'user', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setPlan(userData.plan || 'free');
+        }
       } else {
         setUserId(null);
         setWatchlist([]);
@@ -88,11 +96,14 @@ export default function StockKoSearch() {
         setWatchlist((prev) => prev.filter((c) => c !== stock.code));
       } else {
         // 추가
+        const currentOnCount = watchlist.length;
+        const shouldAlert = plan === 'free' && currentOnCount >= 1 ? false : true;
+
         await setDoc(docRef, {
           symbol: stock.code,
           name: stock.name,
           type: 'ko',
-          alert: true,
+          alert: shouldAlert,
           createdAt: serverTimestamp()
         });
         setWatchlist((prev) => [...prev, stock.code]);
