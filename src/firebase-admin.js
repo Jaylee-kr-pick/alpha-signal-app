@@ -13,9 +13,14 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-db.settings({
-  ignoreUndefinedProperties: true,
-});
+
+// settings() 호출은 초기화 후 최초 한 번만 실행
+if (!admin.firestore()._settingsFrozen) {
+  db.settings({
+    ignoreUndefinedProperties: true,
+  });
+}
+
 const FieldValue = admin.firestore.FieldValue;
 
 export { db, FieldValue };
