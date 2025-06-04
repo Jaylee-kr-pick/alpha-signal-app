@@ -16,39 +16,53 @@ type Signal = {
   signal: '매수' | '매도';
 };
 
+type News = {
+  title: string;
+  link: string;
+  pubDate: string;
+};
+
 export default function Home() {
   const [total, setTotal] = useState(0);
   const [todayCount, setTodayCount] = useState(0);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [username, setUsername] = useState('Guest');
+  const [previewNews, setPreviewNews] = useState<News[]>([]);
   const router = useRouter();
 
+  const fetchDashboard = async (userId: string) => {
+    const snapshot = await getDocs(collection(db, "user", userId, "signals"));
+    const docs = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        timestamp: data.timestamp,
+        asset: data.asset,
+        signal: data.signal,
+      } as Signal;
+    }).sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+
+    setSignals(docs);
+    setTotal(docs.length);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const countToday = docs.filter(d => d.timestamp?.toDate().getTime() >= today.getTime()).length;
+    setTodayCount(countToday);
+  };
+
+  const fetchPreviewNews = async (userId: string) => {
+    const res = await fetch(`/api/news/watchlist?uid=${userId}`);
+    const data = await res.json();
+    setPreviewNews(data.articles.slice(0, 5)); // 최신 5개만
+  };
+
   useEffect(() => {
-    const fetchDashboard = async () => {
-      const snapshot = await getDocs(collection(db, "signals"));
-      const docs = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          timestamp: data.timestamp,
-          asset: data.asset,
-          signal: data.signal,
-        } as Signal;
-      }).sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
-
-      setSignals(docs);
-      setTotal(docs.length);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const countToday = docs.filter(d => d.timestamp?.toDate().getTime() >= today.getTime()).length;
-      setTodayCount(countToday)
-    }
-    fetchDashboard();
-
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, user => {
       if (user) {
         setUsername(user.displayName || user.email || '사용자');
+        fetchDashboard(user.uid);
+        fetchPreviewNews(user.uid);
       } else {
         setUsername('Guest');
       }
@@ -118,13 +132,25 @@ export default function Home() {
         </table>
         <div className="mt-6">
           <h2 className="text-base font-semibold mb-2">관심종목 뉴스</h2>
-          {true ? ( // Replace this condition with actual check if preview news exists later
-            <div
-              className="bg-gray-100 p-4 rounded-xl text-sm text-gray-600 cursor-pointer hover:bg-gray-200 transition"
-              onClick={() => router.push("/news/watchlist")}
-            >
-              관심종목 관련 뉴스를 확인하려면 클릭하세요 →
-            </div>
+          {previewNews.length > 0 ? (
+            <ul className="space-y-2">
+              {previewNews.map((news, idx) => (
+                <li key={idx} className="bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition text-sm">
+                  <a href={news.link} target="_blank" rel="noopener noreferrer">
+                    <p className="font-semibold">{news.title}</p>
+                    <p className="text-xs text-gray-500">{new Date(news.pubDate).toLocaleDateString()}</p>
+                  </a>
+                </li>
+              ))}
+              <li className="mt-4 text-center">
+                <button
+                  onClick={() => router.push("/news")}
+                  className="text-blue-500 underline text-sm"
+                >
+                  전체 뉴스 보러가기 →
+                </button>
+              </li>
+            </ul>
           ) : (
             <div className="bg-gray-100 p-4 rounded-xl text-sm text-gray-400 text-center">
               관심종목을 등록하고 뉴스를 빠르게 받아보세요.
