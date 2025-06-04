@@ -32,14 +32,17 @@ export default function Home() {
 
   const fetchDashboard = async (userId: string) => {
     const snapshot = await getDocs(collection(db, "user", userId, "signals"));
-    const docs = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        timestamp: data.timestamp,
-        asset: data.asset,
-        signal: data.signal,
-      } as Signal;
-    }).sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+    const docs = snapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          timestamp: data.createdAt, // createdAt 필드 사용
+          asset: data.name,          // name 필드 사용
+          signal: data.score >= 70 ? '매수' : data.score <= 30 ? '매도' : '중립', // 점수 기준 신호 변환
+        } as Signal;
+      })
+      .filter(d => d.timestamp)
+      .sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
 
     setSignals(docs);
     setTotal(docs.length);
