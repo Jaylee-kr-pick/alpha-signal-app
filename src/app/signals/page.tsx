@@ -10,8 +10,8 @@ type Signal = {
   id: string;
   symbol: string;
   name: string;
-  message: string;
-  timestamp: { seconds: number };
+  analysis: string;
+  createdAt: { seconds: number };
   score: number;
 };
 
@@ -26,8 +26,8 @@ export default function SignalPage() {
 
       try {
         const q = query(
-          collection(db, 'signals', user.uid, 'signals_list'),
-          orderBy('timestamp', 'desc')
+          collection(db, 'user', user.uid, 'signals'),
+          orderBy('createdAt', 'desc')
         );
         const snapshot = await getDocs(q);
         const fetchedSignals = snapshot.docs.map(doc => ({
@@ -78,10 +78,10 @@ export default function SignalPage() {
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-semibold">{signal.name} ({signal.symbol})</span>
                   <span className="text-xs text-gray-400">
-                    {formatDate(signal.timestamp.seconds)}
+                    {formatDate(signal.createdAt.seconds)}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700">{signal.message}</p>
+                <p className="text-sm text-gray-700">{signal.analysis.slice(0, 100)}...</p>
               </div>
             </Link>
             <div className="flex flex-col items-center ml-4">

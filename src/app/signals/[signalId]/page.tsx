@@ -5,10 +5,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { app } from '@/firebase'; // Firebase 초기화 파일
 import { format } from 'date-fns';
 
 const db = getFirestore(app);
+const auth = getAuth(app);
+const user = auth.currentUser;
+const userId = user?.uid;
 
 type SignalDetail = {
   name: string;
@@ -27,8 +31,8 @@ export default function SignalDetailPage() {
 
   useEffect(() => {
     const fetchSignal = async () => {
-      if (!signalId) return;
-      const docRef = doc(db, 'signals', signalId as string);
+      if (!signalId || !userId) return;
+      const docRef = doc(db, 'user', userId!, 'signals', signalId as string);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setSignal(docSnap.data() as SignalDetail);
