@@ -67,11 +67,6 @@ export default function SignalPage() {
     return date.toLocaleString();
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score <= 30) return 'bg-red-500';
-    return 'bg-gray-400';
-  };
 
   return (
     <div className="p-4">
