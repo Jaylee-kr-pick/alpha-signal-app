@@ -13,7 +13,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 type Signal = {
   timestamp: import("firebase/firestore").Timestamp;
   asset: string;
-  signal: '매수' | '매도';
+  signal: '매수' | '매도' | '중립';
 };
 
 type News = {
@@ -39,20 +39,22 @@ export default function Home() {
         asset: data.asset,
         signal: data.signal,
       } as Signal;
-    }).sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+    }).sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
 
     setSignals(docs);
     setTotal(docs.length);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const countToday = docs.filter(d => d.timestamp?.toDate().getTime() >= today.getTime()).length;
+    const countToday = docs.filter(d =>
+      d.timestamp.toDate().getTime() >= today.getTime() && d.signal !== '중립'
+    ).length;
     setTodayCount(countToday);
   };
 
   const fetchPreviewNews = async (userId: string) => {
     const res = await fetch(`/api/news/watchlist?uid=${userId}`);
-    const data = await res.json();
+    const data: { articles: News[] } = await res.json();
     setPreviewNews(data.articles.slice(0, 5)); // 최신 5개만
   };
 
@@ -120,10 +122,14 @@ export default function Home() {
             ) : (
               signals.slice(0, 5).map((s, idx) => (
                 <tr key={idx} className="border-b">
-                  <td className="py-2">{s.timestamp?.toDate().toLocaleString()}</td>
+                  <td className="py-2">{s.timestamp.toDate().toLocaleString()}</td>
                   <td>{s.asset}</td>
                   <td className={
-                    s.signal === '매수' ? 'text-blue-600 font-medium' : 'text-red-500 font-medium'
+                    s.signal === '매수'
+                      ? 'text-blue-600 font-medium'
+                      : s.signal === '매도'
+                        ? 'text-red-500 font-medium'
+                        : 'text-gray-400 font-medium'
                   }>{s.signal}</td>
                 </tr>
               ))
@@ -131,7 +137,15 @@ export default function Home() {
           </tbody>
         </table>
         <div className="mt-6">
-          <h2 className="text-base font-semibold mb-2">관심종목 뉴스</h2>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-base font-semibold">관심종목 뉴스</h2>
+            <button
+              onClick={() => router.push("/news")}
+              className="bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold"
+            >
+              전체 뉴스 →
+            </button>
+          </div>
           {previewNews.length > 0 ? (
             <ul className="space-y-2">
               {previewNews.map((news, idx) => (
@@ -142,14 +156,6 @@ export default function Home() {
                   </a>
                 </li>
               ))}
-              <li className="mt-4 text-center">
-                <button
-                  onClick={() => router.push("/news")}
-                  className="text-blue-500 underline text-sm"
-                >
-                  전체 뉴스 보러가기 →
-                </button>
-              </li>
             </ul>
           ) : (
             <div className="bg-gray-100 p-4 rounded-xl text-sm text-gray-400 text-center">
