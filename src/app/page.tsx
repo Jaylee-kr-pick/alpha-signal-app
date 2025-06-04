@@ -13,7 +13,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 type Signal = {
   timestamp: import("firebase/firestore").Timestamp;
   asset: string;
-  signal: '매수' | '매도' | '중립';
+  score: number;
 };
 
 type News = {
@@ -36,9 +36,9 @@ export default function Home() {
       .map(doc => {
         const data = doc.data();
         return {
-          timestamp: data.createdAt, // createdAt 필드 사용
-          asset: data.name,          // name 필드 사용
-          signal: data.score >= 70 ? '매수' : data.score <= 30 ? '매도' : '중립', // 점수 기준 신호 변환
+          timestamp: data.createdAt,
+          asset: data.name,
+          score: data.score,
         } as Signal;
       })
       .filter(d => d.timestamp)
@@ -50,7 +50,7 @@ export default function Home() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const countToday = docs.filter(d =>
-      d.timestamp.toDate().getTime() >= today.getTime() && d.signal !== '중립'
+      d.timestamp.toDate().getTime() >= today.getTime() && !(d.score >= 40 && d.score < 60)
     ).length;
     setTodayCount(countToday);
   };
@@ -127,13 +127,17 @@ export default function Home() {
                 <tr key={idx} className="border-b">
                   <td className="py-2">{s.timestamp.toDate().toLocaleString()}</td>
                   <td>{s.asset}</td>
-                  <td className={
-                    s.signal === '매수'
-                      ? 'text-blue-600 font-medium'
-                      : s.signal === '매도'
-                        ? 'text-red-500 font-medium'
-                        : 'text-gray-400 font-medium'
-                  }>{s.signal}</td>
+                  <td>
+                    {s.score >= 80
+                      ? '🟢 매우 긍정'
+                      : s.score >= 60
+                      ? '🔵 긍정'
+                      : s.score >= 40
+                      ? '🟡 중립'
+                      : s.score >= 20
+                      ? '🟠 부정'
+                      : '🔴 매우 부정'}
+                  </td>
                 </tr>
               ))
             )}
