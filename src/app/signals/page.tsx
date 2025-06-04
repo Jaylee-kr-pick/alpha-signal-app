@@ -89,9 +89,11 @@ export default function SignalPage() {
                 <span className="font-bold text-gray-800 text-base">{signal.name} ({signal.symbol})</span>
                 <div className="text-xs text-gray-500">{formatDate(signal.createdAt.seconds)}</div>
               </div>
-              <div className="flex flex-col items-center">
-                <div className="text-2xl">{getSignalEmoji(signal.score)}</div>
-                <span className="text-xs mt-1">{getSignalLabel(signal.score)}</span>
+              <div className="flex flex-col items-center justify-center">
+                <div className="flex items-center space-x-1">
+                  <div className="text-2xl">{getSignalEmoji(signal.score)}</div>
+                  <span className="text-xs">{getSignalLabel(signal.score)}</span>
+                </div>
               </div>
             </div>
             <div className="flex justify-between items-center">
