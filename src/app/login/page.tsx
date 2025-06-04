@@ -3,18 +3,33 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/firebase';
 import Image from 'next/image';
 
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        const userRef = doc(db, "user", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            email: user.email || '',
+            displayName: user.displayName || '',
+            createdAt: serverTimestamp(),
+            plan: 'free', // default 요금제
+          });
+          console.log('✅ Firestore user 문서 생성 완료');
+        }
+
         router.push('/'); // 로그인되면 홈화면으로 이동
       }
     });
