@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -53,24 +51,21 @@ export default function SignalDetailPage() {
   const formattedDate = format(new Date(signal.createdAt.seconds * 1000), 'yyyy년 MM월 dd일 HH:mm');
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{signal.name} 시그널 상세</h1>
-      <div className="bg-white shadow p-6 rounded space-y-4">
-        <div className="text-lg">
-          <strong>종목명:</strong> {signal.name}
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="bg-white shadow-lg rounded-lg p-8 space-y-6">
+        <div className="flex justify-between items-center border-b pb-4">
+          <div>
+            <h1 className="text-2xl font-bold">{signal.name}</h1>
+            <p className="text-gray-500 text-sm">{signal.symbol}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-gray-400 text-sm">{formattedDate}</p>
+            <p className="text-lg font-semibold mt-1">시그널 점수: <span className="text-blue-600">{signal.score}점</span></p>
+          </div>
         </div>
-        <div className="text-lg">
-          <strong>종목 코드:</strong> {signal.symbol}
-        </div>
-        <div className="text-lg">
-          <strong>시그널 시간:</strong> {formattedDate}
-        </div>
-        <div className="text-lg">
-          <strong>시그널 점수:</strong> {signal.score}점
-        </div>
-        <div className="text-lg">
-          <strong>분석 내용:</strong>
-          <p className="mt-2 whitespace-pre-line">{signal.analysis}</p>
+        <div>
+          <h2 className="text-xl font-semibold mb-2">📊 상세 분석 내용</h2>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{signal.analysis}</p>
         </div>
       </div>
     </div>

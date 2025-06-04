@@ -15,6 +15,22 @@ type Signal = {
   score: number;
 };
 
+const getSignalEmoji = (score: number) => {
+  if (score <= 20) return '🔴'; // 매우 부정
+  if (score <= 40) return '🟠'; // 부정
+  if (score <= 60) return '🟡'; // 중립
+  if (score <= 80) return '🔵'; // 긍정
+  return '🟢'; // 매우 긍정
+};
+
+const getSignalLabel = (score: number) => {
+  if (score <= 20) return '매우 부정';
+  if (score <= 40) return '부정';
+  if (score <= 60) return '중립';
+  if (score <= 80) return '긍정';
+  return '매우 긍정';
+};
+
 export default function SignalPage() {
   const { user } = useAuth();
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -71,22 +87,25 @@ export default function SignalPage() {
         {signals.map((signal) => (
           <li
             key={signal.id}
-            className="bg-white p-4 rounded shadow text-sm flex justify-between items-center"
+            className="bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1 text-sm flex flex-col space-y-3"
           >
-            <Link href={`/signals/${signal.id}`}>
-              <div className="flex-1">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-semibold">{signal.name} ({signal.symbol})</span>
-                  <span className="text-xs text-gray-400">
-                    {formatDate(signal.createdAt.seconds)}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700">{signal.analysis.slice(0, 100)}...</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="font-bold text-gray-800 text-base">{signal.name} ({signal.symbol})</span>
+                <div className="text-xs text-gray-500">{formatDate(signal.createdAt.seconds)}</div>
               </div>
-            </Link>
-            <div className="flex flex-col items-center ml-4">
-              <div className={`w-4 h-4 rounded-full ${getScoreColor(signal.score)}`}></div>
-              <span className="text-xs mt-1">{signal.score}점</span>
+              <div className="flex flex-col items-center">
+                <div className="text-2xl">{getSignalEmoji(signal.score)}</div>
+                <span className="text-xs mt-1">{getSignalLabel(signal.score)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-semibold">시그널 점수 - {signal.score}점</div>
+              <Link href={`/signals/${signal.id}`}>
+                <button className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded">
+                  상세 분석 내용 보기
+                </button>
+              </Link>
             </div>
           </li>
         ))}
